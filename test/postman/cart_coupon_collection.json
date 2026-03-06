@@ -1,0 +1,924 @@
+{
+  "info": {
+    "_postman_id": "cart-coupon-api-tests",
+    "name": "Cart Coupon Service API Tests - SCRUM-11693",
+    "description": "Comprehensive API test collection for cart coupon functionality including positive and negative test scenarios",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check - Positive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has correct structure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "    pm.expect(jsonData).to.have.property('service');",
+                  "    pm.expect(jsonData).to.have.property('version');",
+                  "});",
+                  "",
+                  "pm.test(\"Service status is UP\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('UP');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/v1/health",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "health"]
+            },
+            "description": "Verify that the health check endpoint returns UP status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Apply Coupon",
+      "item": [
+        {
+          "name": "Apply Valid Coupon - Positive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 500ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has CartResponse structure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('cartId');",
+                  "    pm.expect(jsonData).to.have.property('userId');",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('subtotal');",
+                  "    pm.expect(jsonData).to.have.property('couponCode');",
+                  "    pm.expect(jsonData).to.have.property('discount');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "    pm.expect(jsonData).to.have.property('appliedAt');",
+                  "});",
+                  "",
+                  "pm.test(\"Coupon code is applied\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.couponCode).to.eql('SAVE20');",
+                  "});",
+                  "",
+                  "pm.test(\"Discount is greater than 0\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.discount).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test(\"Total is less than subtotal\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.total).to.be.below(jsonData.subtotal);",
+                  "});",
+                  "",
+                  "pm.test(\"Applied timestamp is present\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.appliedAt).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Store cart ID for subsequent tests",
+                  "pm.environment.set(\"cartId\", pm.response.json().cartId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Apply a valid coupon code to the cart and verify discount is applied"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Empty Coupon Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response has correct structure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "    pm.expect(jsonData).to.have.property('traceId');",
+                  "    pm.expect(jsonData).to.have.property('errorCode');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('details');",
+                  "});",
+                  "",
+                  "pm.test(\"Error code is VALIDATION_ERROR\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.include('VALIDATION');",
+                  "});",
+                  "",
+                  "pm.test(\"Error details mention couponCode field\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var hasFieldError = jsonData.details.some(d => d.field === 'couponCode');",
+                  "    pm.expect(hasFieldError).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to apply an empty coupon code - should fail validation"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Invalid Coupon Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates invalid coupon\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('Invalid');",
+                  "});",
+                  "",
+                  "pm.test(\"Error code is INVALID_COUPON\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.eql('INVALID_COUPON');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"INVALID123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to apply a non-existent coupon code"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Expired Coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message indicates expired coupon\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('expired');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"EXPIRED20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to apply an expired coupon code"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Unauthorized",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates authentication failure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.include('UNAUTHORIZED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to apply coupon without authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Cart Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates cart not found\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.eql('CART_NOT_FOUND');",
+                  "    pm.expect(jsonData.message).to.include('Cart not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/999999/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "999999", "coupon"]
+            },
+            "description": "Attempt to apply coupon to non-existent cart"
+          },
+          "response": []
+        },
+        {
+          "name": "Apply Coupon - Not Applicable to Cart Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates coupon not applicable\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.eql('COUPON_NOT_APPLICABLE');",
+                  "    pm.expect(jsonData.message).to.include('not applicable');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"ELECTRONICS10\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to apply coupon that is not applicable to cart items"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Remove Coupon",
+      "item": [
+        {
+          "name": "Remove Coupon - Positive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 500ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has CartResponse structure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('cartId');",
+                  "    pm.expect(jsonData).to.have.property('userId');",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData).to.have.property('subtotal');",
+                  "    pm.expect(jsonData).to.have.property('couponCode');",
+                  "    pm.expect(jsonData).to.have.property('discount');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "});",
+                  "",
+                  "pm.test(\"Coupon code is null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.couponCode).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test(\"Discount is 0\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.discount).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.test(\"Total equals subtotal\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.total).to.eql(jsonData.subtotal);",
+                  "});",
+                  "",
+                  "pm.test(\"Applied timestamp is null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.appliedAt).to.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Remove applied coupon from cart and verify total reverts to original"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Coupon - Idempotent (No Coupon Applied)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Operation is idempotent\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.couponCode).to.be.null;",
+                  "    pm.expect(jsonData.discount).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Remove coupon when no coupon is applied - should be idempotent"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Coupon - Unauthorized",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates authentication failure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.include('UNAUTHORIZED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cart/{{cartId}}/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "{{cartId}}", "coupon"]
+            },
+            "description": "Attempt to remove coupon without authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Coupon - Cart Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates cart not found\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.eql('CART_NOT_FOUND');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cart/999999/coupon",
+              "host": ["{{base_url}}"],
+              "path": ["cart", "999999", "coupon"]
+            },
+            "description": "Attempt to remove coupon from non-existent cart"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validate Coupon",
+      "item": [
+        {
+          "name": "Validate Valid Coupon - Positive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is less than 500ms\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has CouponValidationResponse structure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('valid');",
+                  "    pm.expect(jsonData).to.have.property('couponCode');",
+                  "    pm.expect(jsonData).to.have.property('discountType');",
+                  "    pm.expect(jsonData).to.have.property('discountValue');",
+                  "    pm.expect(jsonData).to.have.property('expiryDate');",
+                  "    pm.expect(jsonData).to.have.property('applicableItems');",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "});",
+                  "",
+                  "pm.test(\"Coupon is valid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.valid).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"Discount type is present\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(['FIXED', 'PERCENTAGE']).to.include(jsonData.discountType);",
+                  "});",
+                  "",
+                  "pm.test(\"Discount value is greater than 0\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.discountValue).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\",\n  \"cartId\": {{cartId}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Validate a valid coupon code against cart"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Invalid Coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Coupon is invalid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.valid).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test(\"Message indicates coupon does not exist\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('does not exist');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"INVALID123\",\n  \"cartId\": {{cartId}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Validate a non-existent coupon code"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Expired Coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Coupon is invalid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.valid).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test(\"Message indicates coupon has expired\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('expired');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"EXPIRED20\",\n  \"cartId\": {{cartId}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Validate an expired coupon code"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Coupon - Missing Required Fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates validation failure\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.include('VALIDATION');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Validate coupon without providing cartId - should fail validation"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Coupon - Unauthorized",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\",\n  \"cartId\": {{cartId}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Attempt to validate coupon without authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Coupon - Cart Not Found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error indicates cart not found\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.errorCode).to.eql('CART_NOT_FOUND');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"SAVE20\",\n  \"cartId\": 999999\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/coupon/validate",
+              "host": ["{{base_url}}"],
+              "path": ["coupon", "validate"]
+            },
+            "description": "Validate coupon for non-existent cart"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "cartId",
+      "value": "12345",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ]
+}

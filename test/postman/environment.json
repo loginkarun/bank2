@@ -1,0 +1,81 @@
+{
+  "id": "bank2-environment",
+  "name": "bank2 API Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "host",
+      "value": "localhost",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "port",
+      "value": "8080",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "context_path",
+      "value": "/api",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "service_name",
+      "value": "myproject",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "service_version",
+      "value": "1.0.0",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "cors_origin",
+      "value": "http://localhost:4200",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "swagger_ui_url",
+      "value": "http://localhost:8080/api/swagger-ui.html",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "api_docs_url",
+      "value": "http://localhost:8080/api/api-docs",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "h2_console_url",
+      "value": "http://localhost:8080/api/h2-console",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "actuator_health_url",
+      "value": "http://localhost:8080/api/actuator/health",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "actuator_info_url",
+      "value": "http://localhost:8080/api/actuator/info",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2024-01-15T10:00:00.000Z",
+  "_postman_exported_using": "Postman/10.0.0"
+}

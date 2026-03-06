@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: bank2 API
+  version: 1.0.0
+  description: Generated from LLD batch - No API specifications found in LLD files
+servers:
+  - url: https://example.com
+    description: Default server
+tags: []
+paths: {}
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        traceId:
+          type: string
+        errorCode:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+    ErrorDetail:
+      type: object
+      properties:
+        field:
+          type: string
+        issue:
+          type: string
+  securitySchemes: {}
+  parameters: {}
+  responses: {}
